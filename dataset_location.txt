@@ -1,0 +1,4 @@
+{
+	"data": "C:\\Users\\abooo\\Desktop\\archive\\HAM10000_images_joint",
+	"labels": "C:\\Users\\abooo\\Desktop\\archive\\HAM10000_metadata.csv"
+}
