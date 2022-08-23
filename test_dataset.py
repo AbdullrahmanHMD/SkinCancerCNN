@@ -6,17 +6,8 @@ image_shape = (600, 450)
 
 dataset = MoleDataset()
 
-image = dataset.images_paths[100]
-print(image)
-print(os.path.basename(os.path.normpath(image)))
+la = dataset[0][1]
 
-
-COLUMN_NAME = "image_id"
-
-image_id = os.path.basename(os.path.normpath(image)).split('.')[0]
-print(image_id)
-
-print(dataset.labels[100])
 
 # print(dataset.labels.loc[dataset.labels[COLUMN_NAME] == image_id])
 

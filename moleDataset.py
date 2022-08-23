@@ -15,7 +15,7 @@ class MoleDataset(Dataset):
         self.test_prop = test_prop
         self.test = test
         self.images_paths = self.read_data()
-        self.labels = self.load_labels()
+        self.metadata = self.load_metadata()
     
     
     def read_data(self):
@@ -46,7 +46,7 @@ class MoleDataset(Dataset):
         
         return images_paths
     
-    def load_labels(self):
+    def load_metadata(self):
         """ This method assigns all the metadata provided in the dataset
             to its corresponding image.
 
@@ -65,24 +65,32 @@ class MoleDataset(Dataset):
             self.labels_path = data_dict['labels']
         
         metadata = pd.read_csv(self.labels_path)
-        
-        COLUMN_NAME = "image_id"
+        return metadata
 
+    
+    def __getitem__(self, index):
+        
+        data_point = self.images_paths[index]
+        
+        image_id = os.path.basename(os.path.normpath(data_point)).split('.')[0]
+        
+        COLUMN_NAME = 'image_id'
+        
+        metadata = self.metadata.loc[self.metadata[COLUMN_NAME] == image_id].to_dict('list')
+        label = metadata['dx'][0]
+        return data_point, label, metadata
+    
+    def __len__(self):
+        return len(self.images_paths)
+    
+    def get_ground_truth(self):
+        
+        COLUMN_NAME = 'image_id'
+
+        metadata = pd.read_csv(self.labels_path)
+        
         image_ids = [os.path.basename(os.path.normpath(im)).split('.')[0] for im in self.images_paths]        
-        
         image_metadata = [metadata.loc[metadata[COLUMN_NAME] == id] for id in image_ids]
+        labels = image_metadata.loc[:, COLUMN_NAME].to_numpy()
         
-        return image_metadata
-        
-        
-        # image_id = os.path.basename(os.path.normpath(image)).split('.')[0]
-        # print(image_id)
-
-        # print(dataset.labels.loc[dataset.labels[COLUMN_NAME] == image_id])
-        
-        
-        
-        
-        
-        
-        
+        return labels
