@@ -1,5 +1,5 @@
 import os
-from moleDataset import MoleDataset
+from data.moleDataset import MoleDataset
 import cv2
 import json
 import numpy as np
@@ -7,14 +7,13 @@ import numpy as np
 dataset = MoleDataset()
 
 STATS_FILE_NAME = "dataset_stats.txt"
-STATS_FILE_PATH = os.path.join(os.getcwd(), STATS_FILE_NAME)
+STATS_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', STATS_FILE_NAME)
 
 mean, std = None, None
 
 with open(STATS_FILE_PATH, 'r') as file:
     stats = json.loads(file.read())
     mean, std = stats['mean'], stats['std']
-
 
 labels, mapped, mapping = dataset.get_ground_truth()
 

@@ -11,13 +11,11 @@ class MoleDataset(Dataset):
     """_summary_
 
     Args:
-        Dataset (_type_): _description_
+        Dataset (MoleDataset): _description_
     """
-    def __init__(self, dataset_path=None, labels_path=None, test_prop=0.2, test=False):
+    def __init__(self, dataset_path=None, labels_path=None):
         self.dataset_path = dataset_path
         self.labels_path = labels_path
-        self.test_prop = test_prop
-        self.test = test
         self.images_paths = self.read_data()
         self.metadata = self.load_metadata()
     
@@ -31,7 +29,7 @@ class MoleDataset(Dataset):
         # If the dataset path is not provided then read from the dataset_location.txt
         # file, otherwise use the value provided when creating the MoleDataset object.
         if self.dataset_path is None:
-            data_loc_path = os.path.join(os.getcwd(), "dataset_location.txt")
+            data_loc_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dataset_location.txt")
             
             with open(data_loc_path, 'r') as file:
                 data_dict = json.loads(file.read())
@@ -44,7 +42,6 @@ class MoleDataset(Dataset):
         join_with_data_path = lambda x : os.path.join(self.dataset_path, x)
         
         images_paths = os.listdir(self.dataset_path)
-        
         images_paths = list(map(join_with_data_path, images_paths))
         
         return images_paths
@@ -57,11 +54,10 @@ class MoleDataset(Dataset):
         Returns:
             list: a list of labels that correspond to the images.
         """
-        
         # If the labels' path is not provided then read from the dataset_location.txt
         # file, otherwise use the value provided when creating the MoleDataset object.
         if self.labels_path is None:
-            data_loc_path = os.path.join(os.getcwd(), "dataset_location.txt")
+            data_loc_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dataset_location.txt")
             
             with open(data_loc_path, 'r') as file:
                 data_dict = json.loads(file.read())
