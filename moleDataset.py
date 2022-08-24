@@ -2,6 +2,7 @@ from torch.utils.data import Dataset
 import os
 import pandas as pd
 import json
+import cv2
 
 class MoleDataset(Dataset):
     """_summary_
@@ -70,21 +71,27 @@ class MoleDataset(Dataset):
     
     def __getitem__(self, index):
         
-        data_point = self.images_paths[index]
+        # Getting the image path and reading it via cv2:
+        image_path = self.images_paths[index]
+        image = cv2.imread(image_path)
         
-        image_id = os.path.basename(os.path.normpath(data_point)).split('.')[0]
-        
+        # Getting the label and metadata of the given image:
+        image_id = os.path.basename(os.path.normpath(image_path)).split('.')[0]
         COLUMN_NAME = 'image_id'
-        
         metadata = self.metadata.loc[self.metadata[COLUMN_NAME] == image_id].to_dict('list')
         label = metadata['dx'][0]
-        return data_point, label, metadata
+        
+        return image, label, metadata
     
     def __len__(self):
         return len(self.images_paths)
     
     def get_ground_truth(self):
-        
+        """_summary_
+
+        Returns:
+            ndarray: A numpy array containing the labels of all the images.
+        """
         COLUMN_NAME = 'image_id'
 
         metadata = pd.read_csv(self.labels_path)
