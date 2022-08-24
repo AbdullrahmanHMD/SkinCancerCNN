@@ -3,6 +3,9 @@ import os
 import pandas as pd
 import json
 import cv2
+import numpy as np
+from numpy import copy
+
 
 class MoleDataset(Dataset):
     """_summary_
@@ -25,7 +28,6 @@ class MoleDataset(Dataset):
         Returns:
             _type_: _description_
         """
-        
         # If the dataset path is not provided then read from the dataset_location.txt
         # file, otherwise use the value provided when creating the MoleDataset object.
         if self.dataset_path is None:
@@ -46,6 +48,7 @@ class MoleDataset(Dataset):
         images_paths = list(map(join_with_data_path, images_paths))
         
         return images_paths
+    
     
     def load_metadata(self):
         """ This method assigns all the metadata provided in the dataset
@@ -83,21 +86,33 @@ class MoleDataset(Dataset):
         
         return image, label, metadata
     
+    
     def __len__(self):
         return len(self.images_paths)
+    
     
     def get_ground_truth(self):
         """_summary_
 
         Returns:
-            ndarray: A numpy array containing the labels of all the images.
+            _type_: _description_
         """
         COLUMN_NAME = 'image_id'
 
         metadata = pd.read_csv(self.labels_path)
         
         image_ids = [os.path.basename(os.path.normpath(im)).split('.')[0] for im in self.images_paths]        
-        image_metadata = [metadata.loc[metadata[COLUMN_NAME] == id] for id in image_ids]
-        labels = image_metadata.loc[:, COLUMN_NAME].to_numpy()
+        image_metadata = np.array([metadata.loc[metadata[COLUMN_NAME] == id] for id in image_ids]).squeeze(axis=1)
+        labels = image_metadata[:, 2]
         
-        return labels
+        unique_values = np.unique(labels)
+        # The mapping of the categorical values to numerical values:
+        mapping = dict(zip(unique_values, list(range(len(unique_values)))))
+        
+        # Creating the mapped labels:
+        mapped_labels = copy(labels)
+        for val in unique_values:
+            feat_mapping = mapping[val]
+            mapped_labels[labels==val] = feat_mapping
+            
+        return labels, mapped_labels, mapping

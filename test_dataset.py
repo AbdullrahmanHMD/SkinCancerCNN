@@ -1,37 +1,25 @@
 import os
 from moleDataset import MoleDataset
 import cv2
-
-image_shape = (600, 450)
+import json
+import numpy as np
 
 dataset = MoleDataset()
 
-la = dataset[0][0]
+STATS_FILE_NAME = "dataset_stats.txt"
+STATS_FILE_PATH = os.path.join(os.getcwd(), STATS_FILE_NAME)
 
-import time
-arr = []
+mean, std = None, None
 
-tic = time.time()
-for x, y, z in dataset:
-    arr.append(x)
-toc = time.time()
-
-print(f'Exec time: {toc - tic}')
+with open(STATS_FILE_PATH, 'r') as file:
+    stats = json.loads(file.read())
+    mean, std = stats['mean'], stats['std']
 
 
-# cv2.imshow("Image 1", la)
-# cv2.waitKey(0)
+labels, mapped, mapping = dataset.get_ground_truth()
 
+print(mapped[:10])
+print(labels[:10])
+print(mapping)
 
-
-# print(dataset.labels.loc[dataset.labels[COLUMN_NAME] == image_id])
-
-
-# print(dataset.images_paths)
-# print(dataset.load_labels())
-
-# print(dataset.labels.loc[dataset.labels[COLUMN_NAME == image_id]])
-
-# cv2.imread()
-# cv2.imshow("Image", image.reshape(image_shape))
-# cv2.waitKey(0)
+# print(np.unique(dataset.get_ground_truth(), return_counts=True))
