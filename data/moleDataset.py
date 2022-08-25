@@ -13,12 +13,14 @@ class MoleDataset(Dataset):
     Args:
         Dataset (MoleDataset): _description_
     """
-    def __init__(self, dataset_path=None, labels_path=None):
+    def __init__(self, dataset_path=None, labels_path=None, transform=None):
         self.dataset_path = dataset_path
         self.labels_path = labels_path
+        self.transform = transform
+        
         self.images_paths = self.read_data()
         self.metadata = self.load_metadata()
-    
+        self.labels, self.mapped_labels, self.mapping = self.get_ground_truth()
     
     def read_data(self):
         """_summary_
@@ -74,13 +76,17 @@ class MoleDataset(Dataset):
         image_path = self.images_paths[index]
         image = cv2.imread(image_path)
         
+        if self.transform is not None:
+            image = self.transform(image)
+        
         # Getting the label and metadata of the given image:
         image_id = os.path.basename(os.path.normpath(image_path)).split('.')[0]
         COLUMN_NAME = 'image_id'
         metadata = self.metadata.loc[self.metadata[COLUMN_NAME] == image_id].to_dict('list')
         label = metadata['dx'][0]
         
-        return image, label, metadata
+        return image, self.mapped_labels[index], metadata
+        # return image, label, metadata
     
     
     def __len__(self):
@@ -96,9 +102,8 @@ class MoleDataset(Dataset):
         COLUMN_NAME = 'image_id'
 
         metadata = pd.read_csv(self.labels_path)
-        
-        image_ids = [os.path.basename(os.path.normpath(im)).split('.')[0] for im in self.images_paths]        
-        image_metadata = np.array([metadata.loc[metadata[COLUMN_NAME] == id] for id in image_ids]).squeeze(axis=1)
+        image_ids = [os.path.basename(os.path.normpath(im)).split('.')[0].strip() for im in self.images_paths]
+        image_metadata = np.array([metadata.loc[metadata[COLUMN_NAME] == i].to_numpy() for i in image_ids]).squeeze(axis=1)
         labels = image_metadata[:, 2]
         
         unique_values = np.unique(labels)
