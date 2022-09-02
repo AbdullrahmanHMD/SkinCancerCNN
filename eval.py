@@ -1,9 +1,21 @@
 import torch
-from train import get_device
 
+def get_device():
+    """ Returns the device according to the following:
+        If the system supports "cuda" cuda is returned
+        Otherwise "cpu" is returned
 
-def evaluate(model, data_loader):
-    device = get_device()
+    Returns:
+        str: The device in which the training will occur.
+    """
+    device = 'cpu'
+    if torch.cuda.is_available():
+        device = 'cuda'
+    return device
+
+def evaluate(model, data_loader, device=None):
+    if device is None:
+        device = get_device()
     
     model.eval()
     model = model.to(device=device)

@@ -4,8 +4,22 @@ from tqdm import tqdm
 from eval import evaluate
 
 
+def get_device():
+    """ Returns the device according to the following:
+        If the system supports "cuda" cuda is returned
+        Otherwise "cpu" is returned
+
+    Returns:
+        str: The device in which the training will occur.
+    """
+    device = 'cpu'
+    if torch.cuda.is_available():
+        device = 'cuda'
+    return device
+
+
 def train(model, train_loader, validation_loader, criterion, optimizer,
-          epochs, scheduler=None, verbose=False):
+          epochs, scheduler=None, verbose=False, device=None):
     """ The training routine that will be used for the SkinCancerCNN.
 
     Args:
@@ -21,7 +35,8 @@ def train(model, train_loader, validation_loader, criterion, optimizer,
     Returns:
         _type_: _description_
     """
-    device = get_device()
+    if device is None:
+        device = get_device()
     
     epoch_durations = []
     total_loss = []    
@@ -55,8 +70,8 @@ def train(model, train_loader, validation_loader, criterion, optimizer,
         print('Evaluating epoch...', flush=True)
         
         # Calculating test and train accuracies:
-        test_accuracy = evaluate(model, validation_loader)
-        train_accuracy = evaluate(model, train_loader)
+        test_accuracy = evaluate(model, validation_loader, device)
+        train_accuracy = evaluate(model, train_loader, device)
         
         accuracies_validation.append(test_accuracy)
         accuracies_train.append(train_accuracy)
@@ -81,17 +96,3 @@ def train(model, train_loader, validation_loader, criterion, optimizer,
         
     return total_loss, epoch_durations, accuracies_train, accuracies_validation
 
-
-        
-def get_device():
-    """ Returns the device according to the following:
-        If the system supports "cuda" cuda is returned
-        Otherwise "cpu" is returned
-
-    Returns:
-        str: The device in which the training will occur.
-    """
-    device = 'cpu'
-    if torch.cuda.is_available():
-        device = 'cuda'
-    return device

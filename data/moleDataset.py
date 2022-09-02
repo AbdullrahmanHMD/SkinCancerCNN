@@ -116,4 +116,18 @@ class MoleDataset(Dataset):
             feat_mapping = mapping[val]
             mapped_labels[labels==val] = feat_mapping
             
-        return labels, mapped_labels, mapping
+        return labels, mapped_labels.astype(np.int64), mapping
+    
+    def get_data_distribution(self):
+        """ Provides a dictionary with keys being the classes names and values
+            being the frequency of these classes in the dataset.
+
+        Returns:
+            dict: A dictionary with keys being the classes and values being the
+            frequency of these classes.
+        """
+        data_distribution = dict(zip(self.mapping.keys(), np.bincount(self.mapped_labels)))
+        return data_distribution
+        
+        
+        
