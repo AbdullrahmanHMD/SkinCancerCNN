@@ -20,6 +20,7 @@ def evaluate(model, data_loader, device=None):
     model.eval()
     model = model.to(device=device)
     accuracy = 0
+    num_correct = 0
     for x, y, _ in data_loader:
         
         x = x.to(device=device)

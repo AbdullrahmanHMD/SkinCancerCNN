@@ -47,7 +47,7 @@ def train(model, train_loader, validation_loader, criterion, optimizer,
     model.train()
     model = model.to(device=device)
     
-    for epoch in tqdm(epochs):
+    for epoch in tqdm(range(epochs)):
         
         epoch_loss = 0
         epoch_tic = time.time()
@@ -55,6 +55,8 @@ def train(model, train_loader, validation_loader, criterion, optimizer,
         for x, y, _ in train_loader:
             x = x.to(device=device)
             y = y.to(device=device)
+            
+            # x = torch.permute(x, (0, 3, 1, 2)).astype(torch.float)
             
             optimizer.zero_grad()
             
@@ -92,7 +94,8 @@ def train(model, train_loader, validation_loader, criterion, optimizer,
 
         # Printing information about the epoch:
         if verbose:
-            print(f'Epoch: {epoch} | Loss: {epoch_loss:.2f} | Runtime: {epoch_time:.2f} seconds')
+            print(f'Epoch: {epoch} | Train_acc: {train_accuracy:.2f}% | Val_acc: {test_accuracy:.2f}% \
+| Loss: {epoch_loss:.2f} | Runtime: {epoch_time:.2f} seconds')
         
     return total_loss, epoch_durations, accuracies_train, accuracies_validation
 
