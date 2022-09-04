@@ -56,7 +56,7 @@ class SkinCancerModel(nn.Module):
         
         # --- Third layer ----------------------------------------------------------
         
-        kernel_size, stride, padding = 5, 3, 1
+        kernel_size, stride, padding = 3, 2, 1
         out_channels_3 = 64
         
         self.conv_3 = nn.Conv2d(in_channels=out_channels_2, out_channels=out_channels_3,

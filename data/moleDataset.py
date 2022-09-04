@@ -22,6 +22,7 @@ class MoleDataset(Dataset):
         self.metadata = self.load_metadata()
         self.labels, self.mapped_labels, self.mapping = self.get_ground_truth()
     
+    
     def read_data(self):
         """_summary_
 
@@ -86,7 +87,6 @@ class MoleDataset(Dataset):
         # label = metadata['dx'][0]
         
         return image, self.mapped_labels[index], metadata
-        # return image, label, metadata
     
     
     def __len__(self):
@@ -118,6 +118,7 @@ class MoleDataset(Dataset):
             
         return labels, mapped_labels.astype(np.int64), mapping
     
+    
     def get_data_distribution(self):
         """ Provides a dictionary with keys being the classes names and values
             being the frequency of these classes in the dataset.
@@ -128,6 +129,19 @@ class MoleDataset(Dataset):
         """
         data_distribution = dict(zip(self.mapping.keys(), np.bincount(self.mapped_labels)))
         return data_distribution
-        
+    
+    
+    def get_class_indecies(self, label : int):
+        """ Gets the indicies of a data point of a certain class.
+
+        Args:
+            label (int): The label of the class in whose indicies
+            will be returned.
+
+        Returns:
+            list: The list of the indicies of the given class.
+        """
+        class_indicies = [i for i, l in enumerate(self.mapped_labels) if l==label]
+        return class_indicies
         
         

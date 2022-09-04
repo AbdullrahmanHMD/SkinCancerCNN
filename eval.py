@@ -19,8 +19,10 @@ def evaluate(model, data_loader, device=None):
     
     model.eval()
     model = model.to(device=device)
+    
     accuracy = 0
     num_correct = 0
+    count = 0
     for x, y, _ in data_loader:
         
         x = x.to(device=device)
@@ -30,7 +32,11 @@ def evaluate(model, data_loader, device=None):
         
         _, label = torch.max(y_pred, axis=1)
         num_correct += (y == label).sum().item()
+        # Using count variable becuase len(data_loader) * data_loader.batch_size does not
+        # necessarly return the correct number of data points. Consider the case where
+        # the number of data points is not divisible by the batch size.
+        count += 1 * label.shape[0]
         
-    accuracy = num_correct / len(data_loader) * data_loader.batch_size
+    accuracy = 100 * num_correct / count
     
     return accuracy
