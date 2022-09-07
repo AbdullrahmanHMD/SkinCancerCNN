@@ -1,7 +1,7 @@
 import torch
 import time
 from tqdm import tqdm
-from eval import evaluate
+from evaluate import evaluate
 
 
 def get_device():

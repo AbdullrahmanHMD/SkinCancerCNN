@@ -1,4 +1,5 @@
 import torch
+from tqdm import tqdm
 
 def get_device():
     """ Returns the device according to the following:
@@ -23,7 +24,7 @@ def evaluate(model, data_loader, device=None):
     accuracy = 0
     num_correct = 0
     count = 0
-    for x, y, _ in data_loader:
+    for x, y, _ in tqdm(data_loader):
         
         x = x.to(device=device)
         y = y.to(device=device)

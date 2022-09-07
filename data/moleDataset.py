@@ -143,5 +143,21 @@ class MoleDataset(Dataset):
         """
         class_indicies = [i for i, l in enumerate(self.mapped_labels) if l==label]
         return class_indicies
+    
+    def class_weights(self):
+        """ Returns a list containing the weights of each class.
+
+        Returns:
+            list: a list containing the weights of each class.
+        """
+        class_dist = self.get_data_distribution()
         
+        # Given a class number of data points, returns the weight of this class:
+        class_weight = lambda x : 1 - (x / len(self.labels))
         
+        weights = []
+        for value in list(class_dist.values()):
+            weight = class_weight(value)
+            weights.append(weight)
+        
+        return weights      
