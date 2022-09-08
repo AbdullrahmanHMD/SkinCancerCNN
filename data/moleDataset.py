@@ -1,3 +1,4 @@
+from importlib.metadata import metadata
 from torch.utils.data import Dataset
 import os
 import pandas as pd
@@ -85,7 +86,6 @@ class MoleDataset(Dataset):
         image_id = os.path.basename(os.path.normpath(image_path)).split('.')[0]
         COLUMN_NAME = 'image_id'
         metadata = self.metadata.loc[self.metadata[COLUMN_NAME] == image_id].to_dict('list')
-        # label = metadata['dx'][0]
         
         return image, self.mapped_labels[index], metadata
     
