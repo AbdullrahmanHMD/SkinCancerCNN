@@ -21,31 +21,29 @@ with open(STATS_FILE_PATH, 'r') as file:
 # -------------------------------------------------------------------------------------------------------
 
 image_preprocessing = transforms.Compose([
-                                        # transforms.ToTensor(),
+                                        transforms.ToTensor(),
                                         transforms.transforms.Normalize(mean, std),
                                         lambda image : transforms.functional.adjust_sharpness(image,
                                                                                               sharpness_factor=2)
 ])
 
-dataset_pre = MoleDataset(transform=image_preprocessing)
+indecies = [0, 1, 2, 3]
 
-dataset = MoleDataset()
+# dataset_pre = MoleDataset(transform=image_preprocessing, indecies=indecies, augment=True)
 
-i = 5000
-cv2.imshow("Original", dataset[i][0])
-cv2.imshow("Normalized and Sharpened", dataset[i][0])
+# dataset_pre = MoleDataset(indecies=indecies, augment=True)
 
-cv2.waitKey(0)
+# for i in range(len(dataset_pre)):
+#     image = dataset_pre[i][0]
+#     cv2.imshow("Original", image)
+#     cv2.waitKey(0)
     
-# train_batch_size = 1
-# train_loader = DataLoader(dataset=dataset_pre, batch_size=train_batch_size, shuffle=True)
-# model = SkinCancerModel().to(device='cuda')
 
-# for x, y, z in train_loader:
-    # x = x.to(device='cuda')
-    # print(model(x).shape)
-    # break
-    # print(y, "\n", x)
-    # break
+import time
 
-# print(np.unique(dataset.get_ground_truth(), return_counts=True))
+tic = time.time()
+dataset_pre = MoleDataset(transform=transforms)
+toc = time.time()
+
+# print(f'Exec time: {toc - tic}')
+    

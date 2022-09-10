@@ -15,13 +15,17 @@ class MoleDataset(Dataset):
     Args:
         Dataset (MoleDataset): _description_
     """
-    def __init__(self, dataset_path=None, labels_path=None, transform=None):
+    def __init__(self, dataset_path=None, labels_path=None, transform=None, indecies=None, augment=False):
         self.dataset_path = dataset_path
         self.labels_path = labels_path
         self.transform = transform
         
+        self.indecies = indecies
+        self.augment = augment
+        
         self.images_paths = self.read_data()
         self.metadata = self.load_metadata()
+        self.aug_metadata = None
         self.labels, self.mapped_labels, self.mapping = self.get_ground_truth()
     
     
@@ -40,15 +44,35 @@ class MoleDataset(Dataset):
                 data_dict = json.loads(file.read())
                 
             self.dataset_path = data_dict['data']
-            
                
         # Given a list of data points, joins the name of each data point with the
         # path of the data.
-        join_with_data_path = lambda x : os.path.join(self.dataset_path, x)
+        join_with_data_path = lambda x, abs_path : os.path.join(abs_path, x)
         
         images_paths = os.listdir(self.dataset_path)
-        images_paths = list(map(join_with_data_path, images_paths))
+        images_paths = list(map(join_with_data_path, images_paths, [self.dataset_path] * len(images_paths)))
         
+        # If the indecies of the data is specified then select only the images
+        # corresponding to the specified indecies.
+        if self.indecies is not None:
+            images_paths = np.array(images_paths)[self.indecies]
+        
+        # If augment is true, reads appends the paths of the augmented images to the
+        # list of images' paths.
+        if self.augment:
+            with open(data_loc_path, 'r') as file:
+                data_dict = json.loads(file.read())
+            # Reading the path where the augmented data is located:
+            aug_data_path = data_dict['aug_data']
+            # Creating a list that contains the names of the augmented images:
+            aug_images_paths = os.listdir(aug_data_path)
+            aug_images_paths.remove('metadata.csv')
+            # Joining the path of the folder that contains the augmented images
+            # with the images' names:
+            aug_images_paths = np.array(list(map(join_with_data_path, aug_images_paths, [aug_data_path] * len(aug_images_paths))))
+            # Joining the original and augmented data paths together:
+            images_paths = np.append(images_paths, aug_images_paths)
+            
         return images_paths
     
     
@@ -67,9 +91,23 @@ class MoleDataset(Dataset):
             with open(data_loc_path, 'r') as file:
                 data_dict = json.loads(file.read())
                 
-            self.labels_path = data_dict['labels']
+            self.labels_path = data_dict['labels']        
         
         metadata = pd.read_csv(self.labels_path)
+        
+        if self.augment:
+            data_loc_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dataset_location.txt")
+            
+            with open(data_loc_path, 'r') as file:
+                data_dict = json.loads(file.read())
+            
+            aug_metadata_path = data_dict['aug_data']
+            aug_metadata_path = os.path.join(aug_metadata_path, 'metadata.csv')
+            aug_metadata = pd.read_csv(aug_metadata_path)
+            self.aug_metadata = aug_metadata
+            
+            metadata = pd.concat([metadata, aug_metadata])
+            
         return metadata
 
     
@@ -88,7 +126,7 @@ class MoleDataset(Dataset):
         metadata = self.metadata.loc[self.metadata[COLUMN_NAME] == image_id].to_dict('list')
         
         return image, self.mapped_labels[index], metadata
-    
+   
     
     def __len__(self):
         return len(self.images_paths)
@@ -102,16 +140,20 @@ class MoleDataset(Dataset):
         """
         COLUMN_NAME = 'image_id'
 
-        metadata = pd.read_csv(self.labels_path)
+        # Getting the names of all images from the images' paths:
         image_ids = [os.path.basename(os.path.normpath(im)).split('.')[0].strip() for im in self.images_paths]
-        image_metadata = np.array([metadata.loc[metadata[COLUMN_NAME] == i].to_numpy() for i in image_ids]).squeeze(axis=1)
+        # Getting the metadata from the wanted images (Wanted images are the images specified by the indecies
+        # variable and/or the augmented data)
+        image_metadata = self.metadata.loc[np.isin(self.metadata.to_numpy(), image_ids, assume_unique=True)].to_numpy()
+        
+        # Retrieving the labels from the metadata:
         labels = image_metadata[:, 2]
         
         unique_values = np.unique(labels)
-        # The mapping of the categorical values to numerical values:
+        # # The mapping of the categorical values to numerical values:
         mapping = dict(zip(unique_values, list(range(len(unique_values)))))
         
-        # Creating the mapped labels:
+        # # Creating the mapped labels:
         mapped_labels = copy(labels)
         for val in unique_values:
             feat_mapping = mapping[val]

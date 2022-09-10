@@ -18,5 +18,5 @@ augmenter = DataAugmenter(dataset=dataset, augmentation_path=augmentation_path)
 # print(augmenter.data_distribution)
 # print(augmenter.augmentation_needed)
 
-augmenter.augment_multiple_classes(list(dataset.mapping.keys()), 1)
+augmenter.augment_multiple_classes(list(dataset.mapping.keys()), 2)
 # augmenter.delete_augmented_data()
