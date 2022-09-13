@@ -41,9 +41,13 @@ indecies = [0, 1, 2, 3]
 
 import time
 
-tic = time.time()
-dataset_pre = MoleDataset(transform=transforms)
-toc = time.time()
+
+th = 10
+# tic = time.time()
+dataset_pre = MoleDataset(transform=transforms, class_threshold=th)
+# dataset_pre = MoleDataset(transform=transforms)
+print(dataset_pre.get_data_distribution())
+# toc = time.time()
 
 # print(f'Exec time: {toc - tic}')
     

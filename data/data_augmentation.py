@@ -26,14 +26,15 @@ METADATA_FILE_NAME = 'metadata.csv'
 #   4) The defualt augmentation transform which is
 #       applied if no transform is provided.
 DEFAULT_AUGMENTATION = T.Compose([
-                                    T.ToTensor(),
+                                    
+                                    # T.ToTensor(),
                                     T.RandomAdjustSharpness(sharpness_factor=2, p=0.5),
-                                    T.GaussianBlur(kernel_size=3, sigma=(0.1, 5)),
+                                    T.GaussianBlur(kernel_size=3, sigma=(0.1, 1)),
                                     T.RandomVerticalFlip(p=0.75),
                                     T.RandomAutocontrast(p=0.5),
-                                    
-                                    # This transform makes the image readable by cv2.
                                     lambda image : torch.permute(image, [1, 2, 0])
+                                    # This transform makes the image readable by cv2.
+                                    
                                   ])
 
 class DataAugmenter():
@@ -94,11 +95,9 @@ class DataAugmenter():
         """
         # Getting the indicies of the data points of the given class:
         class_indecies = self.dataset.get_class_indecies(self.dataset.mapping[class_label])
-        
         # Taking a random sample from the indecies and images corresponding to
         # those indecies:
         aug_indicies = np.random.choice(class_indecies, aug_amount, replace=True)
-        
         for image_index in aug_indicies:
             i = len(os.listdir(self.augmentation_path))
             
@@ -108,9 +107,9 @@ class DataAugmenter():
             image_path = self.images_paths[image_index]
             
             # Reading the image to be augmented:
-            image = cv2.imread(image_path)
+            image = self.dataset[image_index][0]
             
-            # Converting the augmented image to a numpy array:
+            # Applying the augmentation:
             augmented_image = self.augmentation_transform(image).cpu().detach().numpy()
             
             # Creating the path and name of the augmented image:
@@ -156,11 +155,16 @@ class DataAugmenter():
         # deleted.
         if replace:
             self.delete_augmented_data()
-            
+            metadata_columns = ['lesion_id', 'image_id', 'dx', 'dx_type', 'age', 'sex', 'localization']
+
+            self.df = pd.DataFrame(columns=metadata_columns)
+            self.df.to_csv(os.path.join(self.augmentation_path, 'metadata.csv'), index=False)
+                        
         if isinstance(aug_amount, int):
             aug_amount = [aug_amount] * len(classes)
             
         for cls, amount in zip(classes, aug_amount):
+            print(f'class: {cls} | amount augmented: {amount}')
             self.augment_a_class(cls, amount)
             
     def delete_augmented_data(self):
@@ -191,7 +195,6 @@ class DataAugmenter():
         if safe_to_delete:
             for file_name in os.listdir(self.augmentation_path):
                 image_to_remove_path = os.path.join(self.augmentation_path, file_name)
-                print(image_to_remove_path)
                 os.remove(image_to_remove_path)
         # Show an error message otherwise:
         else:

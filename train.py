@@ -53,6 +53,7 @@ def train(model, train_loader, validation_loader, criterion, optimizer,
         epoch_tic = time.time()
         
         for x, y, _ in train_loader:
+            
             x = x.to(device=device)
             y = y.to(device=device)
             
