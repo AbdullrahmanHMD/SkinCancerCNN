@@ -54,9 +54,9 @@ class DataAugmenter():
         if augmentation_transform is None:
             self.augmentation_transform = DEFAULT_AUGMENTATION
         
-        metadata_columns = ['lesion_id', 'image_id', 'dx', 'dx_type', 'age', 'sex', 'localization']
+        self.metadata_columns = ['lesion_id', 'image_id', 'dx', 'dx_type', 'age', 'sex', 'localization']
         
-        self.df = pd.DataFrame(columns=metadata_columns)
+        self.df = pd.DataFrame(columns=self.metadata_columns)
         self.df.to_csv(os.path.join(self.augmentation_path, 'metadata.csv'), index=False)
         
         self.dataset = dataset
@@ -132,15 +132,20 @@ class DataAugmenter():
             # --- Providing the label and metadata: --------------------------------------------
             
             # Getting the metadata of the corresponding image:
-            # label = self.dataset.labels[image_index]
             metadata = self.dataset[image_index][2]
+            # Updating the image_id with the augmented image name:
+            metadata['image_id'] = aug_image_name
+            
+            columns = metadata.to_numpy()
+            columns[0], columns[1] = columns[1], columns[0]
+            
+            temp_dict = dict(zip(columns, metadata))
             
             # The path where the augmented images will be saved:
             metadata_path = os.path.join(self.augmentation_path, METADATA_FILE_NAME)
             
-            # Updating the image_id with the augmented image name:
-            metadata['image_id'] = aug_image_name
-            metadata_df = pd.DataFrame(metadata)
+            metadata_df = pd.DataFrame()
+            metadata_df = metadata_df.append(temp_dict, ignore_index=True)
             
             # Adding the metadata to the metadata.csv file:
             metadata_df.to_csv(metadata_path, mode='a', index=False, header=False)
@@ -155,9 +160,7 @@ class DataAugmenter():
         # deleted.
         if replace:
             self.delete_augmented_data()
-            metadata_columns = ['lesion_id', 'image_id', 'dx', 'dx_type', 'age', 'sex', 'localization']
-
-            self.df = pd.DataFrame(columns=metadata_columns)
+            self.df = pd.DataFrame(columns=self.metadata_columns)
             self.df.to_csv(os.path.join(self.augmentation_path, 'metadata.csv'), index=False)
                         
         if isinstance(aug_amount, int):

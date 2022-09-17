@@ -28,13 +28,13 @@ class MoleDataset(Dataset):
         self.images_paths = self.read_data()
         self.metadata = self.load_metadata()
         self.labels, self.mapped_labels, self.mapping = self.get_ground_truth()
-        
         self.number_of_classes = len(np.unique(self.labels))
         
         if class_threshold is not None:
             self.class_threshold = class_threshold
             self.threshold_data(self.class_threshold)
-    
+            # self.labels, self.mapped_labels, self.mapping = self.get_ground_truth()
+
     
     def read_data(self):
         """_summary_
@@ -63,7 +63,7 @@ class MoleDataset(Dataset):
         # corresponding to the specified indecies.
         if self.indecies is not None:
             images_paths = images_paths[self.indecies]
-        
+            
         # If augment is true, reads appends the paths of the augmented images to the
         # list of images' paths.
         if self.augment:
@@ -97,15 +97,15 @@ class MoleDataset(Dataset):
             
             with open(data_loc_path, 'r') as file:
                 data_dict = json.loads(file.read())
-                
-            self.labels_path = data_dict['labels']        
+        
+            self.labels_path = data_dict['labels']
         
         metadata = pd.read_csv(self.labels_path)
         
-        # Deleting the unselected entries (unselected indecies are the indecies that are not included
-        # in the indecies variable in the __init__ method):
+        image_ids = np.array([os.path.basename(os.path.normpath(im)).split('.')[0].strip() for im in self.images_paths])
         
-        image_ids = [os.path.basename(os.path.normpath(im)).split('.')[0].strip() for im in self.images_paths]
+        # Deleting the unselected entries (unselected indecies are the indecies that are not included
+        # in the indecies variable in the __init__ method):    
         metadata.drop(metadata[np.logical_not(np.isin(metadata.image_id, image_ids))].index, inplace=True)
         
         if self.augment:
@@ -119,10 +119,11 @@ class MoleDataset(Dataset):
             
             aug_metadata = pd.read_csv(aug_metadata_path)
             self.aug_metadata = aug_metadata
-            # metadata.reset_index(drop=True, inplace=True)
-            # aug_metadata.reset_index(drop=True, inplace=True)
             metadata = pd.concat([metadata, aug_metadata])
             
+        df = pd.DataFrame(np.copy(image_ids), columns=['image_id'])
+        metadata = pd.merge(df, metadata, on='image_id')
+        
         return metadata
 
     
@@ -138,11 +139,9 @@ class MoleDataset(Dataset):
             image = DEFAULT_TRANSFORM(image)
         
         # Getting the label and metadata of the given image:
-        image_id = os.path.basename(os.path.normpath(image_path)).split('.')[0]
-        COLUMN_NAME = 'image_id'
-        metadata = self.metadata.loc[self.metadata[COLUMN_NAME] == image_id].to_dict('list')
-        label = self.mapping[metadata['dx'][0]]
-        return image, label, metadata
+        metadata = self.metadata.iloc[index, :]
+        label = self.mapping[metadata.loc['dx']]
+        return image, label, metadata.to_dict()
    
     
     def __len__(self):
@@ -155,28 +154,17 @@ class MoleDataset(Dataset):
         Returns:
             _type_: _description_
         """
-
-        # Getting the names of all images from the images' paths:
-        # image_ids = [os.path.basename(os.path.normpath(im)).split('.')[0].strip() for im in self.images_paths]
-        # Getting the metadata from the wanted images (Wanted images are the images specified by the indecies
-        # variable and/or the augmented data)
-        # image_metadata = self.metadata.loc[np.isin(self.metadata.image_id.to_numpy(), image_ids, assume_unique=True)].to_numpy()
-        
-        # Retrieving the labels from the metadata:
-        # labels = np.copy(image_metadata[:, 2])
-        
-        labels = self.metadata.dx.to_numpy()
-        
+        labels = np.copy(self.metadata.dx.to_numpy())
         unique_values = np.unique(labels)
         # # The mapping of the categorical values to numerical values:
         mapping = dict(zip(unique_values, list(range(len(unique_values)))))
         
         # # Creating the mapped labels:
-        mapped_labels = copy(labels)
+        mapped_labels = np.copy(labels)
         for val in unique_values:
             feat_mapping = mapping[val]
             mapped_labels[labels==val] = feat_mapping
-            
+        
         return labels, mapped_labels.astype(np.int64), mapping
     
     
@@ -202,22 +190,9 @@ class MoleDataset(Dataset):
         Returns:
             list: The list of the indicies of the given class.
         """
-         
-        image_ids = np.array([os.path.basename(os.path.normpath(im)).split('.')[0] for im in self.images_paths])
         
-        # class_indecies = np.isin(image_ids, self.metadata.image_id.to_numpy())
-        # class_indecies = np.where(class_indecies)[0].astype(np.int)
-        
-        class_indecies = []
-        for i, image_id in enumerate(image_ids):
-            
-            metadata = self.metadata.loc[self.metadata.image_id == image_id].to_numpy()[0]
-            label_txt = metadata[2]
-            label_int = self.mapping[label_txt]
-            
-            if label_int == label:
-                class_indecies.append(i)
-        
+        class_indecies = [i for i, l in enumerate(self.mapped_labels) if l == label]
+
         return class_indecies
     
     def class_weights(self):
@@ -251,15 +226,24 @@ class MoleDataset(Dataset):
             class_point_count = len(class_indecies)
             
             if class_point_count > threshold:
-                
                 to_remove = np.random.choice(class_indecies, class_point_count - threshold, replace=False)
-                image_ids = np.array([os.path.basename(os.path.normpath(im)).split('.')[0] for im in self.images_paths[to_remove]])
+                
                 self.images_paths = np.delete(self.images_paths, to_remove)
                 
-                image_id_meta = self.metadata.image_id.to_numpy()
-                labels_to_remove = np.isin(image_id_meta, image_ids)
-                labels_to_remove = np.where(labels_to_remove)[0].astype(np.int)
+                image_ids = np.array([os.path.basename(os.path.normpath(im)).split('.')[0].strip() for im in self.images_paths])
                 
-                self.labels = np.delete(np.copy(self.labels), labels_to_remove)
-                self.mapped_labels = np.delete(np.copy(self.mapped_labels), labels_to_remove)
+                df = pd.DataFrame(np.copy(image_ids), columns=['image_id'])
+                self.metadata = pd.merge(df, self.metadata, on='image_id')
+                
+                self.labels = self.metadata.dx.to_numpy()
+                unique_values = np.unique(self.labels)
+                
+                mapping = dict(zip(unique_values, list(range(len(unique_values)))))
+                mapped_labels = np.copy(self.labels)
+                for val in unique_values:
+                    feat_mapping = mapping[val]
+                    mapped_labels[self.labels==val] = feat_mapping
+                
+                self.mapped_labels = mapped_labels.astype(np.int64)
+                
                 

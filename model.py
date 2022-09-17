@@ -11,7 +11,7 @@ class SkinCancerModel(nn.Module):
         # --- First layer ----------------------------------------------------------
         
         kernel_size, stride, padding = 3, 1, 1
-        out_channels_1 = 16
+        out_channels_1 = 8
         
         self.conv_1 = nn.Conv2d(in_channels=in_channel, out_channels=out_channels_1,
                                 kernel_size=kernel_size, stride=stride, padding=padding)
@@ -34,7 +34,7 @@ class SkinCancerModel(nn.Module):
         # --- Second layer ----------------------------------------------------------
         
         kernel_size, stride, padding = 3, 1, 1
-        out_channels_2 = 32
+        out_channels_2 = 16
         
         self.conv_2 = nn.Conv2d(in_channels=out_channels_1, out_channels=out_channels_2,
                                 kernel_size=kernel_size, stride=stride, padding=padding)
@@ -57,21 +57,21 @@ class SkinCancerModel(nn.Module):
         # --- Third layer ----------------------------------------------------------
         
         kernel_size, stride, padding = 3, 2, 1
-        out_channels_3 = 64
+        out_channels_3 = 32
         
         self.conv_3 = nn.Conv2d(in_channels=out_channels_2, out_channels=out_channels_3,
                                 kernel_size=kernel_size, stride=stride, padding=padding)
         
         # --- Getting the image size after conv_3 --------------------------------------
-        new_image_size_ = self.new_image_size(image_dims=new_image_size_, kernel=kernel_size,
-                                              padding=padding, stride=stride)
+        # new_image_size_ = self.new_image_size(image_dims=new_image_size_, kernel=kernel_size,
+        #                                       padding=padding, stride=stride)
         # ------------------------------------------------------------------------------
         kernel_size = 3
         self.max_pooling_3 = nn.MaxPool2d(kernel_size=kernel_size, stride=kernel_size)
         
         # --- Getting the image size after max_pooling_3 -------------------------------
-        new_image_size_ = self.new_image_size(image_dims=new_image_size_, kernel=kernel_size,
-                                              padding=0, stride=kernel_size)
+        # new_image_size_ = self.new_image_size(image_dims=new_image_size_, kernel=kernel_size,
+        #                                       padding=0, stride=kernel_size)
         # ------------------------------------------------------------------------------
         
         self.batch_norm_3 = nn.BatchNorm2d(num_features=out_channels_3)
@@ -80,6 +80,7 @@ class SkinCancerModel(nn.Module):
         
         # --- Fully Connected layer ------------------------------------------------
         in_features = new_image_size_[0] * new_image_size_[1] * out_channels_3
+        in_features = new_image_size_[0] * new_image_size_[1] * out_channels_2
         # hidden_size = 5000
         
         self.fc_1 = nn.Linear(in_features=in_features, out_features=number_of_classes)
@@ -122,12 +123,12 @@ class SkinCancerModel(nn.Module):
         
         # --- Third Layer --------------------------
         
-        x = self.conv_3(x)
-        x = self.batch_norm_3(x)
-        x = self.max_pooling_3(x)
+        # x = self.conv_3(x)
+        # x = self.batch_norm_3(x)
+        # x = self.max_pooling_3(x)
         
-        x = self.leaky_relu(x)
-        x = self.dropout_3(x)
+        # x = self.leaky_relu(x)
+        # x = self.dropout_3(x)
         
         # --- Fully Connected ----------------------
         
