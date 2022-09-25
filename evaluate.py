@@ -31,7 +31,7 @@ def evaluate(model, data_loader, device=None):
         x = x.to(device=device)
         y = y.to(device=device)
         
-        y_pred = model(x)
+        y_pred = model(x.float())
         
         _, label = torch.max(y_pred, axis=1)
         num_correct += (y == label).sum().item()
