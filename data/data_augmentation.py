@@ -56,8 +56,11 @@ class DataAugmenter():
         
         self.metadata_columns = ['lesion_id', 'image_id', 'dx', 'dx_type', 'age', 'sex', 'localization']
         
-        self.df = pd.DataFrame(columns=self.metadata_columns)
-        self.df.to_csv(os.path.join(self.augmentation_path, 'metadata.csv'), index=False)
+        aug_metadata_path = os.path.join(self.augmentation_path, 'metadata.csv')
+        
+        if not os.path.exists(aug_metadata_path):
+            self.df = pd.DataFrame(columns=self.metadata_columns)
+            self.df.to_csv(aug_metadata_path, index=False)
         
         self.dataset = dataset
         self.images_paths = dataset.images_paths

@@ -141,7 +141,9 @@ class MoleDataset(Dataset):
         # Getting the label and metadata of the given image:
         metadata = self.metadata.iloc[index, :]
         label = self.mapping[metadata.loc['dx']]
-        return image, label, metadata.to_dict()
+        # return image, label, metadata
+        # return image, label, metadata.to_dict()
+        return image, label
    
     
     def __len__(self):

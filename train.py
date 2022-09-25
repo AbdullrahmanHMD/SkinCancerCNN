@@ -2,7 +2,7 @@ import torch
 import time
 from tqdm import tqdm
 from evaluate import evaluate
-
+from torch import optim
 
 def get_device():
     """ Returns the device according to the following:
@@ -51,13 +51,12 @@ def train(model, train_loader, validation_loader, criterion, optimizer,
         
         epoch_loss = 0
         epoch_tic = time.time()
-        
-        for x, y, _ in train_loader:
+        count = 0
+        for datum in train_loader:
+            x, y = datum
             
             x = x.to(device=device)
             y = y.to(device=device)
-            
-            # x = torch.permute(x, (0, 3, 1, 2)).astype(torch.float)
             
             optimizer.zero_grad()
             
@@ -66,6 +65,10 @@ def train(model, train_loader, validation_loader, criterion, optimizer,
             loss = criterion(y_pred, y)
             
             epoch_loss += loss.item()
+            
+            # This variable is used to calculate the mean loss for
+            # each epoch so that it can be used with ReduceLROnPlateau.
+            count += 1
             
             loss.backward()
             optimizer.step()
@@ -89,9 +92,16 @@ def train(model, train_loader, validation_loader, criterion, optimizer,
 
         # Advancing the scheduler:
         if scheduler is not None:
-            lr = optimizer.param_groups[0]['lr']
-            print(f'Learning rate: {lr}')
-            scheduler.step()
+            # If the scheduler is ReduceLROnPlateau then provide the mean
+            # loss to the step() method:
+            if isinstance(scheduler, optim.lr_scheduler.ReduceLROnPlateau):
+                lr = optimizer.param_groups[0]['lr']
+                print(f'Learning rate: {lr}')
+                scheduler.step(epoch_loss / count)
+            else:
+                lr = optimizer.param_groups[0]['lr']
+                print(f'Learning rate: {lr}')
+                scheduler.step()
 
         # Printing information about the epoch:
         if verbose:
